@@ -24,7 +24,6 @@ GRAVITY = 1.9  # Gravity constant
 GAP = 150  # Gap between pipes
 GUTTER = 75 # Gutter space at the top and bottom of the screen
 START_X = 160 # Starting X position for the turd
-# sizeOfGrid = 50  # Size of the grid for the game
 font = pygame.font.Font(None, 36)  # Font for rendering text
 
 previous_score = 0
@@ -71,7 +70,7 @@ class Pipes(pygame.sprite.Sprite):
 class Turd(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        self.image = pygame.image.load("turd.png").convert_alpha()
+        self.image = pygame.image.load("assets/turd.png").convert_alpha()
         self.rect = self.image.get_rect()
         self.rect.center = (START_X, SCREEN_HEIGHT / 2)
         self.velocity = 0
@@ -95,7 +94,7 @@ class Turd(pygame.sprite.Sprite):
 class Cloud(pygame.sprite.Sprite):
     def __init__(self, size, speed):
         super().__init__()
-        self.image = pygame.image.load("cloud.png").convert_alpha()
+        self.image = pygame.image.load("assets/cloud.png").convert_alpha()
         self.image = pygame.transform.scale(self.image, size)
         self.rect = self.image.get_rect()
         self.rect.center = (SCREEN_WIDTH, random.randint(0, SCREEN_HEIGHT - size[1]))
@@ -170,7 +169,6 @@ def main():
           SCREEN.blit(text, (10, 10))  # Draw the text at position (10, 10)
           
           if previous_score > 0:
-            print(f"bullshit{previous_score}")
             oldscore = font.render("Previous: %d" % previous_score, 1, COLOR_BLACK)
             SCREEN.blit(oldscore, (10, 50))  # Draw below the current score
 
