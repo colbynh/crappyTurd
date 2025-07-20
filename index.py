@@ -4,20 +4,33 @@ from pygame.locals import *
 
 pygame.init()
 
+# TODO - Add a background image
+# TODO - Add a score counter
+# TODO - Add a game over screen
+# TODO - Add a start screen
+# TODO - refine turd sprite
+# TODO - refine pipe sprite
+# TODO - heading on turd based on velocity
+# TODO - explosion on collision? OR spawn a buch of turds?
+
 COLOR_WHITE = pygame.Color(255, 255, 255)   # White
 COLOR_BROWN = pygame.Color(139, 69, 19)    # Brown
 COLOR_GREEN = pygame.Color(0, 255, 0)      # Green
-COLOR_RED = pygame.Color(255, 0, 0)        # Red
+COLOR_BLACK = pygame.Color(0, 0, 0)        # Black
+COLOR_SKY_BLUE = pygame.Color(135, 206, 235)  # Sky Blue
 
 # Initialize the game window
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-SCREEN.fill(COLOR_WHITE)  # Fill the screen with black
+SCREEN.fill(COLOR_SKY_BLUE)  # Fill the screen with black
 
 GRAVITY = 1  # Gravity constant
 GAP = 150  # Gap between pipes
 GUTTER = 75 # Gutter space at the top and bottom of the screen
+START_X = 160 # Starting X position for the turd
+sizeOfGrid = 50  # Size of the grid for the game
+font = pygame.font.Font(None, 36)  # Font for rendering text
 
 # Set up the game clock
 FPS = 30
@@ -36,8 +49,7 @@ class Pipes(pygame.sprite.Sprite):
       def reset(self):
         topPipeMaxY = random.randint(GUTTER, round((SCREEN_HEIGHT - GUTTER - GAP)))
 
-        # self.image = pygame.image.load("enemy.png")
-        self.image = pygame.Surface((50, topPipeMaxY))
+        self.image = pygame.Surface((50, topPipeMaxY), 0, 32)
         self.image.fill(COLOR_GREEN)  # Fill the enemy rectangle with black color
 
         self.rect = self.image.get_rect()
@@ -54,24 +66,19 @@ class Pipes(pygame.sprite.Sprite):
         if self.rect.centerx > 0:
           self.rect.center = (self.rect.centerx - self.speed, self.rect.centery)
           self.bottomSprite.rect.center = (self.bottomSprite.rect.centerx - self.speed, self.bottomSprite.rect.centery)
-        # else:
-        #   self.reset()
-
 
       def draw(self, surface):
         surface.blit(self.image, self.rect)
         surface.blit(self.bottomSprite.image, self.bottomSprite.rect)
 
-
 class Turd(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        # self.image = pygame.image.load("Player.png")
-        # self.rect = self.image.get_rect()
-        self.image = pygame.Surface((40, 40))
-        self.image.fill(COLOR_BROWN)
+        # self.image = pygame.Surface((40, 40))
+        # self.image.fill(COLOR_BROWN)
+        self.image = pygame.image.load("turd.png").convert_alpha()
         self.rect = self.image.get_rect()
-        self.rect.center = (160, SCREEN_HEIGHT / 2)
+        self.rect.center = (START_X, SCREEN_HEIGHT / 2)
         self.velocity = 0
         self.speed = 4
 
@@ -90,51 +97,123 @@ class Turd(pygame.sprite.Sprite):
     def draw(self, surface):
         surface.blit(self.image, self.rect)
 
+class Cloud(pygame.sprite.Sprite):
+    def __init__(self, size, speed):
+        super().__init__()
+        # self.image = pygame.Surface(size)
+        # self.image.fill(COLOR_WHITE)
+        self.image = pygame.image.load("cloud.png").convert_alpha()
+        self.image = pygame.transform.scale(self.image, size)
+        self.rect = self.image.get_rect()
+        self.rect.center = (SCREEN_WIDTH, random.randint(0, SCREEN_HEIGHT - size[1]))
+        self.speed = speed
 
-turd = Turd()
-pipes = [Pipes()]
+    def update(self):
+        self.rect.centerx -= self.speed
+        if self.rect.right < 0:
+            self.rect.left = SCREEN_WIDTH
 
-# Main game loop
-while True:
-    for event in pygame.event.get():
-        if event.type == QUIT:
-            pygame.quit()
-            exit()
-        elif event.type == KEYDOWN:
-            if event.key == K_ESCAPE:
+    def draw(self, surface):
+        surface.blit(self.image, self.rect)
+
+def main():
+    turd = Turd()
+    pipes = [Pipes()]
+    clouds = [Cloud((50, 50), 1), Cloud((100, 100), 3)]  # List of clouds
+    score = 0  # Initial score
+
+    # Main game loop
+    check = False
+    gameOver = False
+    while True:
+        for event in pygame.event.get():
+            if event.type == QUIT:
                 pygame.quit()
                 exit()
+            elif event.type == KEYDOWN:
+                if event.key == K_ESCAPE:
+                    pygame.quit()
+                    exit()
+                if gameOver == True:
+                  if event.key == K_RETURN:
+                    main()
+                    return
 
-    # Your game logic and rendering code would go here
-    turd.update()
+        if gameOver:
+            text = font.render("hit return to restart", 1, COLOR_BLACK)
+            SCREEN.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, SCREEN_HEIGHT // 2 - text.get_height() // 2))
 
-    for pipe in pipes:
-      pipe.update()
-      pipe.draw(SCREEN)
+        if not gameOver:
+          # Your game logic and rendering code would go here
 
-    if pipes[0].rect.centerx < SCREEN_WIDTH - 200:
-      pipes.insert(0,Pipes())
+          for cloud in clouds:
+            cloud.update()
 
-    # Remove pipes that have moved off the screen
-    if pipes and pipes[-1].rect.right <= 0:
-      pipes.pop()
+          for pipe in pipes:
+            pipe.update()
 
-    SCREEN.fill(COLOR_WHITE)  # Fill the screen with white
-    turd.draw(SCREEN)
-    for pipe in pipes:
-      pipe.draw(SCREEN)
+          turd.update()
 
-    for pipe in pipes:
-        if turd.rect.colliderect(pipe.rect) or turd.rect.colliderect(pipe.bottomSprite.rect):
-            print("Collision detected!")
-            pygame.quit()
-            exit()
+          if pipes[0].rect.centerx < SCREEN_WIDTH - 200:
+            pipes.insert(0,Pipes())
 
+          if clouds[0].rect.centerx < SCREEN_WIDTH - 200:
+            clouds.insert(0,Cloud((50, 50), 1))
+            clouds.insert(0,Cloud((100, 100), 3))
+
+          # Remove pipes that have moved off the screen
+          if pipes and pipes[-1].rect.left <= 0:
+            pipes.pop()
+            check = False
+
+          SCREEN.fill(COLOR_SKY_BLUE)  # Fill the screen with white
+          text = font.render("%d" % score, 1, COLOR_BLACK)
+          SCREEN.blit(text, (10, 10))  # Draw the text at position (10, 10)
+
+
+          for cloud in clouds:
+            cloud.draw(SCREEN)
+
+          for pipe in pipes:
+            pipe.draw(SCREEN)
+
+          turd.draw(SCREEN)
+
+          for pipe in pipes:
+              if turd.rect.colliderect(pipe.rect) or turd.rect.colliderect(pipe.bottomSprite.rect) or turd.rect.top <= 0 or turd.rect.bottom >= SCREEN_HEIGHT:
+                  print("Collision detected!")
+                  gameOver = True
+                  # pygame.quit()
+                  # exit()
+
+          if pipes[-1].rect.centerx < START_X and not check:
+              score += 1
+              check = True
+              print(f"Score: {score}")
+
+        pygame.display.flip()  # Update the display
+        clock.tick(FPS)  # Limit the frame rate to 30 FPS
+
+gameStarted = False
+while True:
+    SCREEN.fill(COLOR_SKY_BLUE)  # Fill the screen with white
+
+    for event in pygame.event.get():
+      if event.type == QUIT:
+          pygame.quit()
+          exit()
+      elif event.type == KEYDOWN:
+          if event.key == K_ESCAPE:
+              pygame.quit()
+              exit()
+          if event.key == K_RETURN:
+            if gameStarted == False:
+              gameStarted = True
+              print("Game started!")
+              main()
+
+    if not gameStarted:
+       text = font.render("hit return to start", 1, COLOR_BLACK)
+       SCREEN.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, SCREEN_HEIGHT // 2 - text.get_height() // 2))
 
     pygame.display.flip()  # Update the display
-    clock.tick(FPS)  # Limit the frame rate to 30 FPS
-
-
-# Clean up and exit
-pygame.quit()
-exit()
