@@ -99,14 +99,11 @@ class Turd(pygame.sprite.Sprite):
               if pressed_keys[K_RETURN]:
                   self.velocity = -self.speed * 2.5
                   self.set_rotation("up")
-                  # self.image = self.original_image
 
         self.rect.centery += self.velocity
         if not pressed_keys[K_RETURN]:
           self.set_rotation("down")
-          # self.image = self.original_image
 
-    # def rotate_center(image, rect, angle):
     def rotate_center(self):
       rot_image = pygame.transform.rotate(self.original_image, self.angle)
       rot_rect = rot_image.get_rect(center=self.rect.center)
