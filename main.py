@@ -71,10 +71,23 @@ class Turd(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
         self.image = pygame.image.load("assets/turd.png").convert_alpha()
+        self.original_image = self.image
         self.rect = self.image.get_rect()
         self.rect.center = (START_X, SCREEN_HEIGHT / 2)
         self.velocity = 0
         self.speed = 4
+        self.angle = 0
+
+
+    def set_rotation(self, direction):
+      if direction == "up" and self.angle < 40:
+        self.angle = min(30, self.angle+20)
+        self.rotate_center()
+        
+
+      if direction == "down" and self.angle <= 40 and self.angle > -40:
+        self.angle -= 5
+        self.rotate_center()
 
     def update(self):
         if self.velocity < self.speed * 3:
@@ -85,8 +98,20 @@ class Turd(pygame.sprite.Sprite):
         if self.rect.centery > self.speed * 2.5:
               if pressed_keys[K_RETURN]:
                   self.velocity = -self.speed * 2.5
+                  self.set_rotation("up")
+                  # self.image = self.original_image
 
         self.rect.centery += self.velocity
+        if not pressed_keys[K_RETURN]:
+          self.set_rotation("down")
+          # self.image = self.original_image
+
+    # def rotate_center(image, rect, angle):
+    def rotate_center(self):
+      rot_image = pygame.transform.rotate(self.original_image, self.angle)
+      rot_rect = rot_image.get_rect(center=self.rect.center)
+      self.image = rot_image
+      self.rect = rot_rect
 
     def draw(self, surface):
         surface.blit(self.image, self.rect)
@@ -131,7 +156,7 @@ def main():
                     pygame.quit()
                     exit()
                 if gameOver == True:
-                  if event.key == K_RETURN:
+                  if event.key == K_SPACE:
                     print(f"previous score: {score}")
                     previous_score = score
                     main()
@@ -211,7 +236,7 @@ while True:
           if event.key == K_ESCAPE:
               pygame.quit()
               exit()
-          if event.key == K_RETURN:
+          if event.key == K_SPACE:
             if gameStarted == False:
               gameStarted = True
               print("Game started!")
